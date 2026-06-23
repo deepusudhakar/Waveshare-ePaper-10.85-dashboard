@@ -65,9 +65,9 @@ API_ENDPOINTS = {
 }
 
 # --- CONFIGURATION ---
-# Change to your GEO location
-LOCATION_LAT = 44.8240855
-LOCATION_LON = 20.4934273
+# Change to your GEO location (overridable via DASHBOARD_LAT/DASHBOARD_LON env vars)
+LOCATION_LAT = float(os.environ.get("DASHBOARD_LAT", "44.8240855"))
+LOCATION_LON = float(os.environ.get("DASHBOARD_LON", "20.4934273"))
 
 PRINTER_CONF = {
     'IP': '192.168....',
