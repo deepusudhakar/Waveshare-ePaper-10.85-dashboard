@@ -51,6 +51,7 @@ ENABLE_ROBOROCK = False
 ENABLE_ANTIGRAVITY = False
 ENABLE_CLAUDE = False
 ENABLE_SPOTIFY = False
+ENABLE_GMAIL = False
 
 # --- API ENDPOINTS ---
 API_ENDPOINTS = {
@@ -647,7 +648,7 @@ def update_data_thread():
                     data_store.ping['history'].append(int(ms))
                 data_store.last_update['ping'] = now
 
-        if now - data_store.last_update['gmail'] > 300:
+        if ENABLE_GMAIL and now - data_store.last_update['gmail'] > 300:
             try:
                 creds = None
                 if os.path.exists(GMAIL_TOKEN_PATH):
@@ -1134,12 +1135,13 @@ def render_screen(epd, fonts):
         draw_prog(75, "MONTH", month_pct)
         draw_prog(110, "YEAR", year_pct)
 
-    draw.line((col3_x, 380, epd.width - 20, 380), fill=0, width=2)
+    if ENABLE_GMAIL:
+        draw.line((col3_x, 380, epd.width - 20, 380), fill=0, width=2)
 
-    # 3. Gmail
-    gm_y = 400
-    draw_icon(draw, col3_x, gm_y, "icon_mail", (60, 60))
-    draw.text((col3_x + 80, gm_y + 10), f"Unread Inbox: {gmail_unread}", font=fonts['35'], fill=0)
+        # 3. Gmail
+        gm_y = 400
+        draw_icon(draw, col3_x, gm_y, "icon_mail", (60, 60))
+        draw.text((col3_x + 80, gm_y + 10), f"Unread Inbox: {gmail_unread}", font=fonts['35'], fill=0)
 
     return Himage
 
