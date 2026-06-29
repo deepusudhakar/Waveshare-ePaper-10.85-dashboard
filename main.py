@@ -1092,6 +1092,29 @@ def render_screen(epd, fonts):
     # Clear background for widget
     draw.rectangle((col3_x, sp_y, col3_x + 420, sp_y + 130), fill=255)
 
+    # Time-progress percentages — drawn in the middle slot when no Claude/
+    # Spotify widget occupies it, else relocated to the bottom slot below.
+    day_pct = (dt.hour * 3600 + dt.minute * 60 + dt.second) / 86400.0
+    days_in_m = calendar.monthrange(dt.year, dt.month)[1]
+    month_pct = (dt.day - 1 + (dt.hour / 24.0)) / days_in_m
+    days_in_y = 366 if calendar.isleap(dt.year) else 365
+    year_pct = (dt.timetuple().tm_yday - 1 + (dt.hour / 24.0)) / days_in_y
+
+    def draw_time_progress(base_y, spacing=35, bar_h=20, header=True):
+        if header:
+            draw.text((col3_x, base_y), "TIME PROGRESS", font=fonts['28'], fill=0)
+        row0 = base_y + (40 if header else 0)
+        for i, (label, pct) in enumerate((("DAY", day_pct), ("MONTH", month_pct), ("YEAR", year_pct))):
+            y = row0 + i * spacing
+            draw.text((col3_x, y), label, font=fonts['24'], fill=0)
+            bx, bw = col3_x + 110, 200
+            draw.rectangle((bx, y + 2, bx + bw, y + bar_h + 2), outline=0, width=2)
+            if pct > 0:
+                fill_w = int((bw - 4) * min(pct, 1.0))
+                if fill_w > 0:
+                    draw.rectangle((bx + 2, y + 4, bx + 2 + fill_w, y + bar_h), fill=0)
+            draw.text((bx + bw + 15, y), f"{int(pct * 100)}%", font=fonts['24'], fill=0)
+
     if ENABLE_CLAUDE:
         draw.text((col3_x, sp_y), "CLAUDE AI USAGE", font=fonts['28'], fill=0)
 
@@ -1136,39 +1159,18 @@ def render_screen(epd, fonts):
             draw.text((col3_x + 140, sp_y + 50), track[:25], font=fonts['24'], fill=0)
 
     else:
-        # Fallback: Time Progress
-        tp_y = sp_y
-        draw.text((col3_x, tp_y), "TIME PROGRESS", font=fonts['28'], fill=0)
+        draw_time_progress(sp_y)
 
-        day_pct = (dt.hour * 3600 + dt.minute * 60 + dt.second) / 86400.0
-        days_in_m = calendar.monthrange(dt.year, dt.month)[1]
-        month_pct = (dt.day - 1 + (dt.hour / 24.0)) / days_in_m
-        days_in_y = 366 if calendar.isleap(dt.year) else 365
-        year_pct = (dt.timetuple().tm_yday - 1 + (dt.hour / 24.0)) / days_in_y
-
-        def draw_prog(y_offset, label, pct):
-            draw.text((col3_x, tp_y + y_offset), label, font=fonts['24'], fill=0)
-            bx = col3_x + 110
-            bw = 200
-            bh = 20
-            draw.rectangle((bx, tp_y + y_offset + 2, bx + bw, tp_y + y_offset + bh + 2), outline=0, width=2)
-            if pct > 0:
-                fill_w = int((bw - 4) * min(pct, 1.0))
-                if fill_w > 0:
-                    draw.rectangle((bx + 2, tp_y + y_offset + 4, bx + 2 + fill_w, tp_y + y_offset + bh), fill=0)
-            draw.text((bx + bw + 15, tp_y + y_offset), f"{int(pct * 100)}%", font=fonts['24'], fill=0)
-
-        draw_prog(40, "DAY", day_pct)
-        draw_prog(75, "MONTH", month_pct)
-        draw_prog(110, "YEAR", year_pct)
-
+    # 3. Bottom slot: Gmail when enabled, else relocate time progress here
+    # (compact) when Claude/Spotify displaced it from the middle slot.
     if ENABLE_GMAIL:
         draw.line((col3_x, 380, epd.width - 20, 380), fill=0, width=2)
-
-        # 3. Gmail
         gm_y = 400
         draw_icon(draw, col3_x, gm_y, "icon_mail", (60, 60))
         draw.text((col3_x + 80, gm_y + 10), f"Unread Inbox: {gmail_unread}", font=fonts['35'], fill=0)
+    elif ENABLE_CLAUDE or ENABLE_SPOTIFY:
+        draw.line((col3_x, 380, epd.width - 20, 380), fill=0, width=2)
+        draw_time_progress(388, spacing=28, bar_h=16, header=False)
 
     return Himage
 
