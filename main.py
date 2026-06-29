@@ -1062,9 +1062,13 @@ def render_screen(epd, fonts):
                 draw_icon(draw, off_x + 15, 350, get_weather_icon(codes[idx], 1), (45, 45))
                 f_temp = math.floor(temps[idx] + 0.5)
                 draw.text((off_x + 10, 398), f"{f_temp}°F", font=fonts['20'], fill=0)
+                # Precip probability and amount stacked on separate lines — a
+                # single "NN% N.NNin" string overflows the ~105px column.
                 precip_prob = precip_probs[idx] if idx < len(precip_probs) else 0
                 precip_amt = precip_amts[idx] if idx < len(precip_amts) else 0
-                draw.text((off_x + 10, 425), f"{precip_prob}% {precip_amt:.2f}in", font=fonts['20'], fill=0)
+                draw.text((off_x + 10, 421), f"{precip_prob}%", font=fonts['20'], fill=0)
+                if precip_amt > 0:
+                    draw.text((off_x + 10, 443), f'{precip_amt:.2f}"', font=fonts['20'], fill=0)
 
     draw.line((col_w * 2, 10, col_w * 2, 470), fill=0, width=2)
 
