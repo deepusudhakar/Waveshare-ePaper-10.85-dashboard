@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# uv / venv
+.venv/
+
+# direnv
+.direnv/
+
+# Local preview output (Phase B dev loop)
+preview.png
+
+# Runtime state + credentials (never commit; provisioned via Ansible vault)
+dashboard.log
+token.json
+credentials.json
+claude_creds.json
+antigravity_creds.json
+strava_token.json
+roborock_session.json
+roborock_session.pkl
+roborock_stats.json
+usage.json
+limits.json
