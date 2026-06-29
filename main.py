@@ -13,7 +13,6 @@ import resource
 import signal
 import json
 import asyncio
-import pickle
 import subprocess
 import math
 import calendar
@@ -42,16 +41,30 @@ FONT_DIR = os.path.join(BASE_DIR, 'fnt')
 ICON_DIR = os.path.join(BASE_DIR, 'icons')
 LOG_FILE = os.path.join(BASE_DIR, 'dashboard.log')
 
+# Directory for runtime credentials/state (tokens, sessions). Overridable so a
+# deployment can keep secrets outside the app checkout (e.g. /etc/epaper-dashboard).
+# Defaults to the app dir for standalone use. Must be writable by the running
+# user — tokens are refreshed and the Roborock session is cached here.
+CONF_DIR = os.environ.get("DASHBOARD_CONF_DIR", BASE_DIR)
+
+
+def _env_bool(name, default=False):
+    """Read a boolean widget toggle from the environment."""
+    return os.environ.get(name, str(default)).strip().lower() in ("1", "true", "yes", "on")
+
+
 # ######################
 # --- WIDGET TOGGLES ---
 # ######################
-ENABLE_STRAVA = False
-ENABLE_BAMBU = False
-ENABLE_ROBOROCK = False
-ENABLE_ANTIGRAVITY = False
-ENABLE_CLAUDE = False
-ENABLE_SPOTIFY = False
-ENABLE_GMAIL = False
+# Each toggle is overridable via its matching env var (e.g. ENABLE_GMAIL=true);
+# defaults keep every optional widget off.
+ENABLE_STRAVA = _env_bool("ENABLE_STRAVA")
+ENABLE_BAMBU = _env_bool("ENABLE_BAMBU")
+ENABLE_ROBOROCK = _env_bool("ENABLE_ROBOROCK")
+ENABLE_ANTIGRAVITY = _env_bool("ENABLE_ANTIGRAVITY")
+ENABLE_CLAUDE = _env_bool("ENABLE_CLAUDE")
+ENABLE_SPOTIFY = _env_bool("ENABLE_SPOTIFY")
+ENABLE_GMAIL = _env_bool("ENABLE_GMAIL")
 
 # --- API ENDPOINTS ---
 API_ENDPOINTS = {
@@ -77,7 +90,7 @@ PRINTER_CONF = {
 }
 
 ROBOROCK_CONF = {
-    'EMAIL': 'email...'
+    'EMAIL': os.environ.get("DASHBOARD_ROBOROCK_EMAIL", "email...")
 }
 
 LASTFM_CONF = {
@@ -86,13 +99,13 @@ LASTFM_CONF = {
 }
 
 STRAVA_CONF = {
-    'TOKEN_FILE': os.path.join(BASE_DIR, 'strava_token.json')
+    'TOKEN_FILE': os.path.join(CONF_DIR, 'strava_token.json')
 }
 
 # --- FILES & SCOPES ---
-GMAIL_TOKEN_PATH = os.path.join(BASE_DIR, 'token.json')
-ROBOROCK_TOKEN_FILE = os.path.join(BASE_DIR, 'roborock_session.pkl')
-ROBOROCK_STATS_FILE = os.path.join(BASE_DIR, 'roborock_stats.json')
+GMAIL_TOKEN_PATH = os.path.join(CONF_DIR, 'token.json')
+ROBOROCK_TOKEN_FILE = os.path.join(CONF_DIR, 'roborock_session.json')
+ROBOROCK_STATS_FILE = os.path.join(CONF_DIR, 'roborock_stats.json')
 GMAIL_SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
 if os.path.exists(LIB_DIR):
@@ -104,6 +117,7 @@ if os.path.exists(LIB_DIR):
 # lets the render path be imported/previewed on a dev machine (see preview.py).
 try:
     import bambulabs_api as bl
+    from roborock import UserData
     from roborock.web_api import RoborockApiClient
     from roborock.devices.device_manager import create_device_manager, UserParams
 except ImportError:
@@ -447,8 +461,8 @@ def auth_roborock(email):
 
     if os.path.exists(ROBOROCK_TOKEN_FILE):
         try:
-            with open(ROBOROCK_TOKEN_FILE, "rb") as f:
-                return pickle.load(f)
+            with open(ROBOROCK_TOKEN_FILE, "r") as f:
+                return UserData.from_dict(json.load(f))
         except:
             pass
 
@@ -460,7 +474,7 @@ def auth_roborock(email):
         code = input(f"Enter 6-digit Roborock auth code sent to {email} (or press Enter to disable): ").strip()
         if not code: return None
         user_data = await web_api.code_login(code)
-        with open(ROBOROCK_TOKEN_FILE, "wb") as f: pickle.dump(user_data, f)
+        with open(ROBOROCK_TOKEN_FILE, "w") as f: json.dump(user_data.as_dict(), f)
         print("Roborock Authorization Successful!\n")
         return user_data
 
@@ -671,7 +685,7 @@ def update_data_thread():
         if ENABLE_CLAUDE and now - data_store.last_update['claude'] > 600:
             try:
                 subprocess.run([sys.executable, os.path.join(BASE_DIR, 'claude.py')], capture_output=True, timeout=30)
-                usage_path = os.path.join(BASE_DIR, 'usage.json')
+                usage_path = os.path.join(CONF_DIR, 'usage.json')
                 if os.path.exists(usage_path):
                     with open(usage_path, 'r') as f:
                         usage_data = json.load(f)
@@ -693,7 +707,7 @@ def update_data_thread():
         if ENABLE_ANTIGRAVITY and now - data_store.last_update['antigravity'] > 60:
             try:
                 subprocess.run([sys.executable, os.path.join(BASE_DIR, 'antigravity.py')], capture_output=True, timeout=30)
-                limits_path = os.path.join(BASE_DIR, 'limits.json')
+                limits_path = os.path.join(CONF_DIR, 'limits.json')
                 if os.path.exists(limits_path):
                     with open(limits_path, 'r', encoding='utf-8') as f:
                         limits_data = json.load(f)

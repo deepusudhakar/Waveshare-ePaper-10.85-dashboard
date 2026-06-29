@@ -15,8 +15,11 @@ import requests
 
 # --- Configuration ---
 SCRIPT_DIR = Path(__file__).parent.resolve()
-CREDENTIALS_FILE = SCRIPT_DIR / "claude_creds.json"
-USAGE_FILE = SCRIPT_DIR / "usage.json"
+# Credentials/state live in DASHBOARD_CONF_DIR when set (kept in sync with
+# main.py), so deployment can store them outside the app checkout.
+CONF_DIR = Path(os.environ.get("DASHBOARD_CONF_DIR", SCRIPT_DIR))
+CREDENTIALS_FILE = CONF_DIR / "claude_creds.json"
+USAGE_FILE = CONF_DIR / "usage.json"
 LOG_FILE = SCRIPT_DIR / "claude_monitor.log"
 
 CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e" # Public
