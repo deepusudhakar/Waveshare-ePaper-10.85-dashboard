@@ -93,6 +93,32 @@ Since the official Spotify API requires running a local web server for complex t
 
 ---
 
+## Local Development (preview without hardware)
+
+You can iterate on the layout and widgets on a regular computer — no Raspberry Pi
+or e-paper panel required. `render_screen()` builds a plain Pillow image, so
+`preview.py` renders the dashboard straight to a PNG.
+
+Dependencies are managed with [uv](https://docs.astral.sh/uv/) against a committed
+lockfile (`uv.lock`) for reproducible, hash-verified installs:
+
+```bash
+uv sync                      # base deps (the hardware group is Pi-only)
+uv run python preview.py     # render preview.png with mock data (instant, offline)
+uv run python preview.py --live   # fetch real weather/crypto/ping, then render
+```
+
+If you use [direnv](https://direnv.net/), `direnv allow` will auto-sync the
+environment whenever you enter the directory.
+
+**VS Code:** press `Cmd+Shift+B` (the default *Preview Dashboard* build task) to
+render `preview.png` and open it in one step. A *Preview Dashboard (live data)*
+task is also available.
+
+The hardware SPI driver (`spidev`/`gpiozero`/`lgpio`) is imported lazily inside
+`main()`, so importing the module for preview never touches GPIO. Install those on
+the Pi with `uv sync --group hardware`.
+
 ## Running the Dashboard
 
 To ensure the dashboard continues running even after you close your SSH connection, use `tmux`.
