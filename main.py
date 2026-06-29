@@ -1226,7 +1226,7 @@ def main():
                 image = render_screen(epd, fonts)
                 buf = epd.getbuffer(image)
 
-                if refresh_counter >= 600:
+                if refresh_counter >= 120:
                     logging.info("Full Refresh cycle")
                     epd.init()
                     epd.display(buf)
