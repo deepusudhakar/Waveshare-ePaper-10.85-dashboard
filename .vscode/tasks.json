@@ -1,0 +1,34 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Preview Dashboard",
+      "type": "shell",
+      "command": "uv run python preview.py && open preview.png",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "clear": true
+      },
+      "detail": "Render the dashboard to preview.png (mock data) and open it. Bound to Cmd+Shift+B."
+    },
+    {
+      "label": "Preview Dashboard (live data)",
+      "type": "shell",
+      "command": "uv run python preview.py --live && open preview.png",
+      "problemMatcher": [],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "detail": "Fetch real weather/crypto/ping data, then render and open preview.png."
+    }
+  ]
+}

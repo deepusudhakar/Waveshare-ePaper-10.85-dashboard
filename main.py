@@ -98,8 +98,11 @@ GMAIL_SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 if os.path.exists(LIB_DIR):
     sys.path.append(LIB_DIR)
 
+# NOTE: waveshare_epd is imported lazily inside main() — on non-Pi hosts its
+# module-level device probe raises RuntimeError (not ImportError), which would
+# escape this guard and make `import main` fail. Keeping it out of module scope
+# lets the render path be imported/previewed on a dev machine (see preview.py).
 try:
-    from waveshare_epd import epd10in85
     import bambulabs_api as bl
     from roborock.web_api import RoborockApiClient
     from roborock.devices.device_manager import create_device_manager, UserParams
@@ -1163,6 +1166,7 @@ def main():
     epd = None
 
     try:
+        from waveshare_epd import epd10in85
         epd = epd10in85.EPD()
         epd.init()
         epd.Clear()
