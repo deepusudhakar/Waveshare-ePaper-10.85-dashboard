@@ -11,9 +11,12 @@ from pathlib import Path
 
 # Setup logging (file and console)
 SCRIPT_DIR = Path(__file__).parent.resolve()
+# Credentials/state live in DASHBOARD_CONF_DIR when set (kept in sync with
+# main.py), so deployment can store them outside the app checkout.
+CONF_DIR = Path(os.environ.get("DASHBOARD_CONF_DIR", SCRIPT_DIR))
 LOG_FILE = SCRIPT_DIR / "limits.log"
-TOKEN_FILE = SCRIPT_DIR / "antigravity_creds.json"
-LIMITS_FILE = SCRIPT_DIR / "limits.json"
+TOKEN_FILE = CONF_DIR / "antigravity_creds.json"
+LIMITS_FILE = CONF_DIR / "limits.json"
 
 logging.basicConfig(
     level=logging.INFO,
