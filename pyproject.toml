@@ -1,0 +1,31 @@
+[project]
+name = "epaper-dashboard"
+version = "0.1.0"
+description = "Waveshare 10.85in e-paper dashboard"
+requires-python = ">=3.11"
+# Runtime dependencies needed on every platform (dev preview + Pi).
+# Exact versions and hashes are pinned in uv.lock for reproducible,
+# supply-chain-verified installs (`uv sync --frozen`).
+dependencies = [
+    "pillow",
+    "requests",
+    "numpy",
+    "google-api-python-client",
+    "google-auth-httplib2",
+    "google-auth-oauthlib",
+    "python-roborock",
+]
+
+# Hardware-only deps: the Waveshare SPI driver. Installed on the Pi
+# (`uv sync --group hardware`) but skipped on the Mac, so `import main`
+# and the local preview stay hardware-free.
+[dependency-groups]
+hardware = [
+    "spidev",
+    "gpiozero",
+    "lgpio",
+]
+
+[tool.uv]
+# main.py is a script, not an installable package — don't try to build it.
+package = false
