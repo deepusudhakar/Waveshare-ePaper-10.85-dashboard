@@ -565,7 +565,7 @@ def update_data_thread():
         now = time.time()
 
         if now - data_store.last_update['weather'] > 600:
-            weather_url = f"{API_ENDPOINTS['weather']}?latitude={LOCATION_LAT}&longitude={LOCATION_LON}&current=temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_direction_10m,weather_code,is_day,uv_index&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,cloud_cover&timezone=auto&forecast_days=2&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch"
+            weather_url = f"{API_ENDPOINTS['weather']}?latitude={LOCATION_LAT}&longitude={LOCATION_LON}&current=temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_direction_10m,weather_code,is_day,uv_index&hourly=temperature_2m,precipitation_probability,weather_code,cloud_cover&timezone=auto&forecast_days=2&temperature_unit=fahrenheit&wind_speed_unit=mph"
             aqi_url = f"{API_ENDPOINTS['aqi']}?latitude={LOCATION_LAT}&longitude={LOCATION_LON}&current=european_aqi&timezone=auto"
             w_data = net.get_json(weather_url)
             a_data = net.get_json(aqi_url)
@@ -1045,8 +1045,6 @@ def render_screen(epd, fonts):
         times = hourly.get('time', [])
         temps = hourly.get('temperature_2m', [])
         codes = hourly.get('weather_code', [])
-        precip_probs = hourly.get('precipitation_probability', [])
-        precip_amts = hourly.get('precipitation', [])
 
         cur_iso = datetime.now().strftime("%Y-%m-%dT%H:00")
         try:
@@ -1058,13 +1056,10 @@ def render_screen(epd, fonts):
             idx = start_idx + i
             if idx < len(times):
                 off_x = col2_x + (i * 105)
-                draw.text((off_x + 10, 325), f"{times[idx].split('T')[1][:5]}", font=fonts['20'], fill=0)
-                draw_icon(draw, off_x + 15, 350, get_weather_icon(codes[idx], 1), (45, 45))
+                draw.text((off_x + 10, 340), f"{times[idx].split('T')[1][:5]}", font=fonts['24'], fill=0)
+                draw_icon(draw, off_x + 15, 375, get_weather_icon(codes[idx], 1), (60, 60))
                 f_temp = math.floor(temps[idx] + 0.5)
-                draw.text((off_x + 10, 398), f"{f_temp}°F", font=fonts['20'], fill=0)
-                precip_prob = precip_probs[idx] if idx < len(precip_probs) else 0
-                precip_amt = precip_amts[idx] if idx < len(precip_amts) else 0
-                draw.text((off_x + 10, 425), f"{precip_prob}% {precip_amt:.2f}in", font=fonts['20'], fill=0)
+                draw.text((off_x + 15, 440), f"{f_temp}°F", font=fonts['24'], fill=0)
 
     draw.line((col_w * 2, 10, col_w * 2, 470), fill=0, width=2)
 
