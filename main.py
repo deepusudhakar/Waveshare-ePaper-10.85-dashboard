@@ -1196,6 +1196,15 @@ def main():
             epd.Clear()
             time.sleep(3)
         epd.init_Part()
+        # init_Part's hardware reset clears the controller's old-data register
+        # (0x10) to an unknown state, but partFlag is set to 1 so display_Partial
+        # won't reinitialize it — causing wrong transition waveforms on the first
+        # partial and progressive pixel drift over hours. Write all-white to 0x10
+        # explicitly to match the freshly-cleared display.
+        epd.send_command_M(0x10)
+        epd.send_data2_M([0xFF] * 40800)
+        epd.send_command_S(0x10)
+        epd.send_data2_S([0xFF] * 40800)
 
         def load_font(name, size):
             return ImageFont.truetype(os.path.join(FONT_DIR, name), size)
@@ -1236,6 +1245,19 @@ def main():
                     epd.display(buf)
                     time.sleep(2)
                     epd.init_Part()
+                    # Restore 0x10 from buf so the first display_Partial after
+                    # this mode-switch has the correct old-data baseline. Without
+                    # this the controller's 0x10 is in an unknown post-reset state
+                    # (partFlag=1 skips the normal initialization), causing one
+                    # incorrect partial refresh that accumulates into corruption.
+                    _w = epd.width // 16  # 85 bytes per half-row
+                    _m = []; _s = []
+                    for _i in range(epd.height):
+                        _m += buf[_i * _w * 2 : _i * _w * 2 + _w]
+                        _s += buf[_i * _w * 2 + _w : (_i + 1) * _w * 2]
+                    epd.send_command_M(0x10); epd.send_data2_M(_m)
+                    epd.send_command_S(0x10); epd.send_data2_S(_s)
+                    del _m, _s
                     refresh_counter = 0
                 else:
                     logging.info("Partial Refresh")
