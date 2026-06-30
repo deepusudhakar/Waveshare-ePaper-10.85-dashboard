@@ -11,6 +11,12 @@ pixel-accurate preview of the panel.
 
 Mock mode is instant and needs no network — best for iterating on layout.
 Live mode exercises the real (auth-free) weather/crypto/ping fetch path.
+
+Widget toggles mirror the Pi's env vars — set them before running:
+
+    ENABLE_CLAUDE=true uv run python preview.py
+    ENABLE_ROBOROCK=true uv run python preview.py
+    ENABLE_CLAUDE=true ENABLE_ROBOROCK=true uv run python preview.py
 """
 import argparse
 import os
@@ -60,6 +66,8 @@ def load_mock_data():
     now = time.strftime("%Y-%m-%dT%H:00")
     hours = [time.strftime("%Y-%m-%dT%H:00", time.localtime(time.time() + 3600 * i))
              for i in range(1, 6)]
+    reset_5h = time.strftime("%Y-%m-%dT%H:00:00+00:00", time.gmtime(time.time() + 7200))
+    reset_7d = time.strftime("%Y-%m-%dT00:00:00+00:00", time.gmtime(time.time() + 86400 * 5))
     with data_store.lock:
         data_store.weather = {
             'current': {
@@ -82,6 +90,15 @@ def load_mock_data():
         data_store.crypto = {'btc': 59976, 'eth': 1577,
                              'btc_hist': [1] * 10, 'eth_hist': [1] * 10}
         data_store.ping = {'current': 15, 'history': [12, 15, 14, 16, 15, 13]}
+        data_store.claude = {
+            'five_hour': {'utilization': 42, 'resets_at': reset_5h},
+            'seven_day': {'utilization': 18, 'resets_at': reset_7d},
+        }
+        data_store.roborock = {
+            'battery': 100, 'status': 'Charge', 'is_cleaning': False,
+            'last_date': '30 Jun 23:31', 'ref_area': 137.7,
+            'current_area': 0.0, 'pct': 0.0,
+        }
 
 
 def load_live_data(seconds):
