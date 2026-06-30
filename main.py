@@ -1188,9 +1188,13 @@ def main():
     try:
         from waveshare_epd import epd10in85
         epd = epd10in85.EPD()
-        epd.init()
-        epd.Clear()
-        time.sleep(1)
+        # Two full clear cycles with adequate settling time before switching to
+        # partial mode — one cycle can leave pixels in intermediate state if the
+        # display was previously degraded by interrupted refreshes.
+        for _ in range(2):
+            epd.init()
+            epd.Clear()
+            time.sleep(3)
         epd.init_Part()
 
         def load_font(name, size):
