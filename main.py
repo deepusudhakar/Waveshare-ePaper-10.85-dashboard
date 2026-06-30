@@ -1182,6 +1182,11 @@ def main():
     try:
         from waveshare_epd import epd10in85
         epd = epd10in85.EPD()
+        # Hold PWR_PIN low for 2s so the display controller fully powers down
+        # before init. gpiozero.LED creation already sets it low, but the
+        # window is too brief for caps to discharge without this explicit sleep.
+        epd10in85.epdconfig.digital_write(epd10in85.epdconfig.PWR_PIN, 0)
+        time.sleep(2)
         epd.init()
         epd.Clear()
         time.sleep(1)
