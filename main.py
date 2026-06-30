@@ -565,7 +565,7 @@ def update_data_thread():
         now = time.time()
 
         if now - data_store.last_update['weather'] > 600:
-            weather_url = f"{API_ENDPOINTS['weather']}?latitude={LOCATION_LAT}&longitude={LOCATION_LON}&current=temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_direction_10m,weather_code,is_day,uv_index&hourly=temperature_2m,precipitation_probability,weather_code,cloud_cover&timezone=auto&forecast_days=2&temperature_unit=fahrenheit&wind_speed_unit=mph"
+            weather_url = f"{API_ENDPOINTS['weather']}?latitude={LOCATION_LAT}&longitude={LOCATION_LON}&current=temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_direction_10m,weather_code,is_day,uv_index&hourly=temperature_2m,precipitation_probability,weather_code,cloud_cover&timezone=auto&forecast_days=2"
             aqi_url = f"{API_ENDPOINTS['aqi']}?latitude={LOCATION_LAT}&longitude={LOCATION_LON}&current=european_aqi&timezone=auto"
             w_data = net.get_json(weather_url)
             a_data = net.get_json(aqi_url)
@@ -945,8 +945,7 @@ def render_screen(epd, fonts):
         cur = weather['current']
         temp = cur.get('temperature_2m', 0)
         hum = cur.get('relative_humidity_2m', 0)
-        # Open-Meteo has no unit param for surface_pressure; convert hPa to inHg
-        pres = round(cur.get('surface_pressure', 0) * 0.0295299830714, 2)
+        pres = cur.get('surface_pressure', 0)
         w_code = cur.get('weather_code', 0)
         wind_dir = cur.get('wind_direction_10m', 0)
         wind_spd = cur.get('wind_speed_10m', 0)
@@ -956,7 +955,7 @@ def render_screen(epd, fonts):
         temp_rounded = math.floor(temp + 0.5)
 
         draw_icon(draw, col2_x, 20, get_weather_icon(w_code, is_day), (90, 90))
-        draw.text((col2_x + 100, 10), f"{temp_rounded}°F", font=fonts['80'], fill=0)
+        draw.text((col2_x + 100, 10), f"{temp_rounded}°C", font=fonts['80'], fill=0)
 
         uv_x, uv_y = col2_x + 320, 25
         uv_rounded = math.floor(uv_index + 0.5)
@@ -977,7 +976,7 @@ def render_screen(epd, fonts):
             draw.text((uv_val_x, uv_val_y), uv_val_str, font=fonts['60'], fill=0)
 
         draw.text((col2_x + 100, 95), f"Humidity: {hum}%", font=fonts['20'], fill=0)
-        draw.text((col2_x + 100, 120), f"Press: {pres} inHg", font=fonts['20'], fill=0)
+        draw.text((col2_x + 100, 120), f"Press: {pres} hPa", font=fonts['20'], fill=0)
 
         draw.line((col2_x, 140, col2_x + col_w - 40, 140), fill=0, width=2)
 
@@ -1010,7 +1009,7 @@ def render_screen(epd, fonts):
         draw.polygon([(tip_x, tip_y), (left_x, left_y), (right_x, right_y)], fill=0)
         draw.ellipse((cx - 4, cy - 4, cx + 4, cy + 4), fill=0)
 
-        spd_text = f"{wind_spd} mph"
+        spd_text = f"{wind_spd} km/h"
         try:
             bbox = draw.textbbox((0, 0), spd_text, font=fonts['20'])
             tw = bbox[2] - bbox[0]
@@ -1059,7 +1058,7 @@ def render_screen(epd, fonts):
                 draw.text((off_x + 10, 340), f"{times[idx].split('T')[1][:5]}", font=fonts['24'], fill=0)
                 draw_icon(draw, off_x + 15, 375, get_weather_icon(codes[idx], 1), (60, 60))
                 f_temp = math.floor(temps[idx] + 0.5)
-                draw.text((off_x + 15, 440), f"{f_temp}°F", font=fonts['24'], fill=0)
+                draw.text((off_x + 15, 440), f"{f_temp}°C", font=fonts['24'], fill=0)
 
     draw.line((col_w * 2, 10, col_w * 2, 470), fill=0, width=2)
 
