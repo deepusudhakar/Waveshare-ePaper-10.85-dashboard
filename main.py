@@ -687,7 +687,7 @@ def update_data_thread():
         # fork disturbs the controller's GPIO state and the whole panel garbles,
         # unrecoverable without a full reboot. claude.py's functions are pure
         # network/file I/O, so we call them directly and let it write usage.json.
-        if ENABLE_CLAUDE and now - data_store.last_update['claude'] > 600:
+        if ENABLE_CLAUDE and not os.environ.get("DASHBOARD_CLAUDE_NOFETCH") and now - data_store.last_update['claude'] > 600:
             try:
                 import claude as _claude_mod
                 _creds = _claude_mod.load_credentials()
