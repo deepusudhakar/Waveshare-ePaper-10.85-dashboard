@@ -655,10 +655,17 @@ def update_data_thread():
 
         if not ENABLE_ROBOROCK and not ENABLE_ANTIGRAVITY:
             if now - data_store.last_update['ping'] > 20:
+                # TCP connect instead of subprocess ping — fork() from an lgpio-driven
+                # app inherits the C library's internal SPI/GPIO socket fd and can corrupt
+                # the display controller state when it races with display_Partial().
                 try:
-                    out = subprocess.check_output(['ping', '-c', '1', '-W', '1', '8.8.8.8']).decode('utf-8')
-                    ms = float(out.split('time=')[1].split(' ms')[0])
-                except:
+                    t0 = time.time()
+                    _s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    _s.settimeout(1.0)
+                    _s.connect(('8.8.8.8', 53))
+                    _s.close()
+                    ms = (time.time() - t0) * 1000
+                except Exception:
                     ms = 0
                 with data_store.lock:
                     data_store.ping['current'] = int(ms)
