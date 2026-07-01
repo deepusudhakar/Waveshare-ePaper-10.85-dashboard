@@ -1130,7 +1130,7 @@ def render_screen(epd, fonts):
                     draw.rectangle((bx + 2, y + 4, bx + 2 + fill_w, y + bar_h), fill=0)
             draw.text((bx + bw + 15, y), f"{int(pct * 100)}%", font=fonts['24'], fill=0)
 
-    if ENABLE_CLAUDE:
+    if ENABLE_CLAUDE and not os.environ.get("DASHBOARD_CLAUDE_NORENDER"):
         draw.text((col3_x, sp_y), "CLAUDE AI USAGE", font=fonts['28'], fill=0)
 
         if claude.get('error'):
