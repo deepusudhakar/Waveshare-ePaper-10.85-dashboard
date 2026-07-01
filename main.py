@@ -1253,6 +1253,14 @@ def main():
                 signal.alarm(20)
                 image = render_screen(epd, fonts)
                 buf = epd.getbuffer(image)
+                # DEBUG: dump the exact rendered frame to disk to separate a
+                # render bug (corrupt PNG) from a hardware/driver issue (clean
+                # PNG but corrupt panel). Set DASHBOARD_DEBUG_RENDER=1 to enable.
+                if os.environ.get("DASHBOARD_DEBUG_RENDER"):
+                    try:
+                        image.save("/tmp/dash_render.png")
+                    except Exception:
+                        pass
 
                 if refresh_counter >= 60:
                     logging.info("Full Refresh cycle")
