@@ -681,10 +681,24 @@ def update_data_thread():
                 pass
             data_store.last_update['gmail'] = now
 
-        # Claude Data Fetching (Run external script every 10 min)
+        # Claude Data Fetching (every 10 min). Runs inline in this thread — NOT
+        # as a subprocess. Spawning a child process from this app (which drives
+        # the e-paper panel over SPI/GPIO via lgpio) corrupts the display: the
+        # fork disturbs the controller's GPIO state and the whole panel garbles,
+        # unrecoverable without a full reboot.
         if ENABLE_CLAUDE and now - data_store.last_update['claude'] > 600:
             try:
-                subprocess.run([sys.executable, os.path.join(BASE_DIR, 'claude.py')], capture_output=True, timeout=30)
+                import claude as _claude_mod
+                _creds = _claude_mod.load_credentials()
+                if _creds and _claude_mod.token_is_expired(_creds):
+                    _creds = _claude_mod.refresh_access_token(_creds)
+                _raw = _claude_mod.fetch_usage(_creds.get("accessToken")) if _creds else None
+                if _raw is None and _creds:
+                    _creds = _claude_mod.refresh_access_token(_creds)
+                    if _creds:
+                        _raw = _claude_mod.fetch_usage(_creds.get("accessToken"))
+                if _raw:
+                    _claude_mod.save_usage(_raw)
                 usage_path = os.path.join(CONF_DIR, 'usage.json')
                 if os.path.exists(usage_path):
                     with open(usage_path, 'r') as f:
